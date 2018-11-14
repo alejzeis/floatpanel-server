@@ -11,6 +11,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 @SpringBootApplication
 public class FloatPanelServer {
@@ -24,8 +25,14 @@ public class FloatPanelServer {
     private MongoDatabase mongoDatabase;
     private MongoCollection usersCollection;
 
+    private OperationsManager operationsManager;
+    private AuthManager authManager;
+
     public FloatPanelServer() {
         this.connectToDatabase();
+
+        this.authManager = new AuthManager(this);
+        this.operationsManager = new OperationsManager();
     }
 
     private void connectToDatabase() {
@@ -46,11 +53,23 @@ public class FloatPanelServer {
             logger.error("Failed to find configuration file server.yml!");
             logger.error("Please place a server.yml file in the current directory, or /etc/floatpanel/server.yml if on Linux.");
             System.exit(1);
+        } catch(IOException e) {
+            logger.error("IOException: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
         } catch (KeyNotFoundException e) {
             logger.error("Failed to find all the required keys and values in configuration file server.yml!");
             System.exit(1);
         }
 
         SpringApplication.run(FloatPanelServer.class, args);
+    }
+
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    public static ServerConfig getConfig() {
+        return config;
     }
 }

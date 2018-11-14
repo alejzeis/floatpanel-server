@@ -36,6 +36,9 @@ module floatpanel.server {
 
     requires gson;
 
+    requires jjwt.api;
+    requires java.jwt;
+
     requires spring.beans;
     requires spring.core;
     requires spring.context;
@@ -46,7 +49,7 @@ module floatpanel.server {
 
     requires tomcat.embed.core;
 
-    requires bson;
+    requires org.mongodb.bson;
     requires org.mongodb.driver.core;
     requires org.mongodb.driver.async.client;
 
@@ -54,4 +57,5 @@ module floatpanel.server {
 
     exports io.github.jython234.floatpanel.server;
     exports io.github.jython234.floatpanel.server.controller;
+    exports io.github.jython234.floatpanel.server.json;
 }

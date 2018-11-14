@@ -1,11 +1,13 @@
 package io.github.jython234.floatpanel.server.config;
 
+import io.github.jython234.floatpanel.server.AuthManager;
+import io.github.jython234.floatpanel.server.FloatPanelServer;
 import io.github.jython234.floatpanel.server.KeyNotFoundException;
+import org.apache.commons.io.IOUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 public class ServerConfig {
@@ -13,15 +15,18 @@ public class ServerConfig {
 
     public final String mongoUrl;
     public final String databaseName;
+    public final String serverSecret;
 
 
-    public ServerConfig(int port, String mongoUrl, String databaseName) {
+    public ServerConfig(int port, String mongoUrl, String databaseName, String serverSecret) {
         this.port = port;
         this.mongoUrl = mongoUrl;
         this.databaseName = databaseName;
+        this.serverSecret = serverSecret;
     }
 
-    public static ServerConfig loadConfig() throws FileNotFoundException, KeyNotFoundException {
+    @SuppressWarnings("unchecked")
+    public static ServerConfig loadConfig() throws IOException, KeyNotFoundException {
         var configLocation = new File("server.yml"); // Just search in our current directory;
 
         if(System.getProperty("os.name").equals("linux")) {
@@ -40,12 +45,21 @@ public class ServerConfig {
             var port = (int) map.get("port");
             var mongoUrl = (String) map.get("mongoUrl");
             var databaseName = (String) map.get("databaseName");
+            var serverSecret = (String) map.get("serverSecret");
 
             if(mongoUrl == null || databaseName == null || port < 0) {
                 throw new KeyNotFoundException("Failed to find all the required keys and values in the YAML configuration!");
             }
 
-            return new ServerConfig(port, mongoUrl, databaseName);
+            if(serverSecret == null || serverSecret.equals("")) {
+                FloatPanelServer.getLogger().warn("Failed to find \"server secret\" in configuration file, generating new secret...");
+                serverSecret = AuthManager.generateNewSecret();
+
+                map.put("serverSecret", serverSecret);
+                yaml.dump(map, new FileWriter(configLocation)); // Overwrite the config file with our new secret
+            }
+
+            return new ServerConfig(port, mongoUrl, databaseName, serverSecret);
         } else throw new FileNotFoundException("Failed to find config file!");
     }
 }

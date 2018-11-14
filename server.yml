@@ -1,0 +1,1 @@
+{port: 8080, mongoUrl: 'mongodb://172.17.0.2', databaseName: floatpanel, serverSecret: HGkL97CGVXC28bgIka7GLxCDhnRWf+Toq3w3UgTk7AE3OnL0lnEl6o86kRiysGb9}
