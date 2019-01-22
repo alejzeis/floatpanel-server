@@ -32,7 +32,7 @@ public class FloatPanelServer {
         this.connectToDatabase();
 
         this.authManager = new AuthManager(this);
-        this.operationsManager = new OperationsManager();
+        this.operationsManager = new OperationsManager(this);
     }
 
     private void connectToDatabase() {
