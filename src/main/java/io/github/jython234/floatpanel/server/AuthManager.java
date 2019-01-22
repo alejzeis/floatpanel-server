@@ -4,8 +4,11 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.sql.Date;
 import java.time.Instant;
@@ -17,12 +20,14 @@ import java.util.Calendar;
  *
  * @author jython234
  */
+@Component
 public class AuthManager {
     private final FloatPanelServer server;
 
     private Algorithm serverKey;
     private JWTVerifier verifier;
 
+    @Autowired
     public AuthManager(FloatPanelServer server) {
         this.server = server;
 
@@ -43,8 +48,8 @@ public class AuthManager {
 
         var jwt = JWT.create()
                 .withIssuer("FloatPanel-Server")
-                .withSubject("CLIENT")
-                .withAudience(uuid)
+                .withSubject(uuid)
+                .withAudience("CLIENT")
                 .withExpiresAt(expirationDate)
                 .sign(this.serverKey);
 
@@ -60,24 +65,23 @@ public class AuthManager {
     public String issueAgentToken(String uuid) {
         var jwt = JWT.create()
                 .withIssuer("FloatPanel-Server")
-                .withSubject("AGENT")
-                .withAudience(uuid)
+                .withSubject(uuid)
+                .withAudience("AGENT")
                 .sign(this.serverKey);
 
         return jwt;
     }
 
-    public boolean verifyToken(String jwt) {
+    public DecodedJWT verifyAndDecodeToken(String jwt) {
         try {
-            var decoded = this.verifier.verify(jwt);
-            return true;
+            return this.verifier.verify(jwt);
         } catch(JWTVerificationException e) {
-            return false;
+            return null;
         }
     }
 
     private void loadKey() {
-        var key = Base64.getDecoder().decode(FloatPanelServer.getConfig().serverSecret.getBytes());
+        var key = Base64.getDecoder().decode(this.server.config.serverSecret.getBytes());
         this.serverKey = Algorithm.HMAC512(key);
         this.verifier = JWT.require(this.serverKey)
                 .withIssuer("FloatPanel-Server")

@@ -4,35 +4,43 @@ import com.mongodb.async.client.MongoClient;
 import com.mongodb.async.client.MongoClients;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.async.client.MongoDatabase;
-import io.github.jython234.floatpanel.server.config.ServerConfig;
+import io.github.jython234.floatpanel.server.operations.OperationsManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.stereotype.Component;
 
 @SpringBootApplication
+@EnableScheduling
+@Component
 public class FloatPanelServer {
     public static final String PROTO_VERSION = "1.0";
     public static final String ROOT_PATH = "/floatpanel/api/v" + PROTO_VERSION + "";
 
     private static Logger logger;
-    private static ServerConfig config;
 
+
+    public ServerConfig config;
     private MongoClient mongoClient;
     private MongoDatabase mongoDatabase;
     private MongoCollection usersCollection;
 
+    @Autowired
     private OperationsManager operationsManager;
+    @Autowired
     private AuthManager authManager;
 
-    public FloatPanelServer() {
-        this.connectToDatabase();
+    @Autowired
+    public FloatPanelServer(ServerConfig config) {
+        this.config = config;
 
-        this.authManager = new AuthManager(this);
-        this.operationsManager = new OperationsManager(this);
+        logger = LoggerFactory.getLogger("FloatPanel-Server");
+        logger.info("Starting FloatPanel-Server for protocol v" + PROTO_VERSION + "...");
+
+        this.connectToDatabase();
     }
 
     private void connectToDatabase() {
@@ -44,24 +52,6 @@ public class FloatPanelServer {
     }
 
     public static void main(String[] args) {
-        logger = LoggerFactory.getLogger("FloatPanel-Server");
-        logger.info("Starting FloatPanel-Server for protocol v" + PROTO_VERSION + "...");
-
-        try {
-            config = ServerConfig.loadConfig();
-        } catch (FileNotFoundException e) {
-            logger.error("Failed to find configuration file server.yml!");
-            logger.error("Please place a server.yml file in the current directory, or /etc/floatpanel/server.yml if on Linux.");
-            System.exit(1);
-        } catch(IOException e) {
-            logger.error("IOException: " + e.getMessage());
-            e.printStackTrace();
-            System.exit(1);
-        } catch (KeyNotFoundException e) {
-            logger.error("Failed to find all the required keys and values in configuration file server.yml!");
-            System.exit(1);
-        }
-
         SpringApplication.run(FloatPanelServer.class, args);
     }
 
@@ -69,7 +59,15 @@ public class FloatPanelServer {
         return logger;
     }
 
-    public static ServerConfig getConfig() {
+    public ServerConfig getConfig() {
         return config;
+    }
+
+    public AuthManager getAuthManager() {
+        return this.authManager;
+    }
+
+    public OperationsManager getOperationsManager() {
+        return this.operationsManager;
     }
 }

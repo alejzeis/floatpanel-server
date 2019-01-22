@@ -57,5 +57,6 @@ module floatpanel.server {
 
     exports io.github.jython234.floatpanel.server;
     exports io.github.jython234.floatpanel.server.controller;
+    exports io.github.jython234.floatpanel.server.operations;
     exports io.github.jython234.floatpanel.server.json;
 }
